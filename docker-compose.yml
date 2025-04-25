@@ -1,0 +1,95 @@
+# Ejemplo de como desplegar en un ambiente de prueba un framework FIWARE para 
+# una aplicacion de ciudad inteligente / Internet de las Cosas
+# 
+# En este ejemplo vamos a usar un sensor que lee la temperatura de una termocupla
+# y la almacena en una base de datos en un servidor FiWARE en la Nube
+# sudo sysctl -w vm.max_map_count=262144
+version: "3.8"
+services:
+  # Frontend desarrollado en streamlit
+  #frontend:
+  #  build: .
+  #  container_name: frontend
+  #  ports:
+  #    - "80:8501"
+  #  volumes:
+  #    - frontend:/app
+
+  # Orion es el motor principal, el agente, el context broker
+  orion:
+    image: fiware/orion-ld
+    platform: linux/amd64
+    hostname: orion
+    container_name: orion
+    depends_on:
+      - mongo-db
+    networks:
+      - default
+    expose:
+      - "1026"
+    ports:
+      - "1026:1026" # localhost:1026
+    command: -dbhost mongo-db -logLevel DEBUG
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail -s http://localhost:1026/version || exit 1"]
+      interval: 10m0s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  #Quantum Leap
+  quantumleap:
+    image: orchestracities/quantumleap
+    platform: linux/amd64
+    hostname: quantumleap
+    container_name: fiware-quantumleap
+    ports:
+      - "8668:8668"
+    depends_on:
+      - crate-db
+      #- redis-db
+    environment:
+      - CRATE_HOST=crate-db
+      - LOGLEVEL=DEBUG
+
+
+  # Bases de datos
+  mongo-db:
+    image: mongo:3.6
+    platform: linux/amd64
+    hostname: mongo-db
+    container_name: db-mongo
+    expose:
+      - "27017"
+    ports:
+      - "27017:27017"
+    networks:
+      - default
+    volumes:
+      - mongo-db:/data/db
+
+  crate-db:
+    image: crate
+    hostname: crate-db
+    container_name: db-crate
+    ports:
+      - "4200:4200"
+      - "4300:4300"
+      - "5432:5432"
+    command: crate -Cauth.host_based.enabled=false  -Ccluster.name=democluster -Chttp.cors.enabled=true -Chttp.cors.allow-origin="*"
+    environment:
+      - CRATE_HEAP_SIZE=4g
+    volumes:
+      - crate-db:/data
+
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.19.1.0/24
+
+volumes:
+  mongo-db: ~
+  crate-db: ~
+  frontend: ~
