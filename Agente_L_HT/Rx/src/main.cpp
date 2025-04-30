@@ -1,4 +1,8 @@
 #include <Arduino.h>
+#include <ClosedCube_HDC1080.h>
+#include <Wire.h>
+#include <SoftwareSerial.h>
+
 
 // put function declarations here:
 int myFunction(int, int);
