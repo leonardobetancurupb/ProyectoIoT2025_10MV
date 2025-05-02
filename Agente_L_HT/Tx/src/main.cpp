@@ -1,84 +1,95 @@
-#include <Arduino.h>
-#include <ClosedCube_HDC1080.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <LoRa.h>
+#include "LoRaBoards.h"
+#include <Wire.h>
+#include <ClosedCube_HDC1080.h>
 
-// Pines LoRa
-#define SS 18
-#define RST 23
-#define DIO0 26
+#ifndef CONFIG_RADIO_FREQ
+#define CONFIG_RADIO_FREQ           915.0
+#endif
+#ifndef CONFIG_RADIO_OUTPUT_POWER
+#define CONFIG_RADIO_OUTPUT_POWER   17
+#endif
+#ifndef CONFIG_RADIO_BW
+#define CONFIG_RADIO_BW             125.0
+#endif
+
+#if !defined(USING_SX1276) && !defined(USING_SX1278)
+#error "Este ejemplo solo funciona con radios SX1276/78"
+#endif
+
+// Pines I2C para el sensor (ajusta si usas otros)
+#define I2C_SDA  0
+#define I2C_SCL  4
 
 ClosedCube_HDC1080 sensor;
 
-double temperatura = 0;
-double humedad = 0;
-int id = 1001;
-
 void setup() {
+  setupBoards();
+  delay(1500); // tiempo de estabilización
+
+#ifdef RADIO_TCXO_ENABLE
+  pinMode(RADIO_TCXO_ENABLE, OUTPUT);
+  digitalWrite(RADIO_TCXO_ENABLE, HIGH);
+#endif
+
   Serial.begin(115200);
-  Wire.begin(0, 4);
+  Serial.println("LoRa Transmitter con sensor HDC1080...");
 
-  // Iniciar sensor HDC1080
-  sensor.begin(0x40);
+  Wire.begin(I2C_SDA, I2C_SCL);
+  sensor.begin(0x40);  // Dirección por defecto del HDC1080
 
-  // Inicializar LoRa
-  Serial.println("Iniciando LoRa...");
-  LoRa.setPins(SS, RST, DIO0);
-  
-  if (!LoRa.begin(915E6)) {
-    Serial.println("Error al iniciar LoRa");
+  // Inicialización del LoRa
+  LoRa.setPins(RADIO_CS_PIN, RADIO_RST_PIN, RADIO_DIO0_PIN);
+  if (!LoRa.begin(CONFIG_RADIO_FREQ * 1E6)) {
+    Serial.println("❌ Fallo al iniciar LoRa.");
     while (1);
   }
-  Serial.println("LoRa iniciado");
+
+  LoRa.setTxPower(CONFIG_RADIO_OUTPUT_POWER);
+  LoRa.setSignalBandwidth(CONFIG_RADIO_BW * 1000);
+  LoRa.setSpreadingFactor(10);
+  LoRa.setPreambleLength(16);
+  LoRa.setSyncWord(0xAB);
+  LoRa.disableCrc();
+  LoRa.disableInvertIQ();
+  LoRa.setCodingRate4(7);
 }
 
 void loop() {
-  temperatura = 0;
-  humedad = 0;
+  // Leer datos del sensor
+  float temp = sensor.readTemperature();
+  float hum = sensor.readHumidity();
 
-  Serial.println("Leyendo sensor...");
-
-  for (int i = 0; i < 10; i++) {
-    float t = sensor.readTemperature();
-    float h = sensor.readHumidity();
-    if (isnan(t) || isnan(h)) {
-      Serial.println("Error leyendo el sensor");
-      return; // Salir del ciclo si hay error de lectura
-    }
-    temperatura += t;
-    humedad += h;
-    delay(100);
+  // Verificar si hay errores
+  if (isnan(temp) || isnan(hum)) {
+    Serial.println("❌ Error leyendo el sensor HDC1080.");
+    delay(2000);
+    return;
   }
 
-  temperatura /= 10;
-  humedad /= 10;
+  // Preparar mensaje
+  String mensaje = "Temp=" + String(temp, 2) + " ;Hum=" + String(hum, 2) + " Agente_L_HT" + " Sensor_01";
+  Serial.println("📡 Enviando por LoRa: " + mensaje);
 
-  String mensaje = "ID=" + String(id) +
-                   ";Temp=" + String(temperatura, 2) +
-                   ";Hum=" + String(humedad, 2);
-
-  Serial.println("Enviando por LoRa: " + mensaje);
-
+  // Transmitir
   int result = LoRa.beginPacket();
   if (result == 0) {
-    Serial.println("Error: No se pudo comenzar el paquete LoRa.");
-  } else {
-    Serial.println("Paquete LoRa comenzado.");
+    Serial.println("❌ No se pudo comenzar el paquete LoRa.");
+    delay(1000);
+    return;
   }
 
   LoRa.print(mensaje);
-  
   result = LoRa.endPacket();
-  
+
   if (result == 0) {
-    Serial.println("Fallo al enviar paquete LoRa.");
+    Serial.println("❌ Fallo al enviar el paquete LoRa.");
   } else {
-    Serial.println("Paquete LoRa enviado exitosamente.");
+    Serial.println("✅ Paquete enviado exitosamente.");
   }
 
-  // Esperar 5 segundos antes del siguiente ciclo
-  Serial.println("Ciclo completado. Esperando 5 segundos...\n");
-  delay(5000); // Espera para el siguiente ciclo
-  Serial.println("Terminó un ciclo.\n");
+  delay(5000);  // Esperar antes de la siguiente transmisión
 }
+
+
+
