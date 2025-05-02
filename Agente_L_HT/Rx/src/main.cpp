@@ -1,60 +1,80 @@
-#include <Arduino.h>
-#include <Wire.h>
-#include <ClosedCube_HDC1080.h>
+#include <SPI.h>
 #include <LoRa.h>
+#include "LoRaBoards.h"
 
-ClosedCube_HDC1080 hdc1080;
+#ifndef CONFIG_RADIO_FREQ
+#define CONFIG_RADIO_FREQ           915.0
+#endif
+#ifndef CONFIG_RADIO_OUTPUT_POWER
+#define CONFIG_RADIO_OUTPUT_POWER   17
+#endif
+#ifndef CONFIG_RADIO_BW
+#define CONFIG_RADIO_BW             125.0
+#endif
 
-// Pines SPI LoRa para TTGO T-Beam
-#define LORA_SCK 5
-#define LORA_MISO 19
-#define LORA_MOSI 27
-#define LORA_SS 18
-#define LORA_DIO0 26
-#define LORA_FREQ 915E6
+#if !defined(USING_SX1276) && !defined(USING_SX1278)
+#error "Este ejemplo solo funciona con radios SX1276/78"
+#endif
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial);
+  setupBoards();
+  delay(1500);  // estabilización al encender
 
-  // Inicializar sensor HDC1080
-  Wire.begin();
-  hdc1080.begin(0x40);
-  Serial.println("Sensor HDC1080 iniciado");
+#ifdef  RADIO_TCXO_ENABLE
+  pinMode(RADIO_TCXO_ENABLE, OUTPUT);
+  digitalWrite(RADIO_TCXO_ENABLE, HIGH);
+#endif
 
-  // Inicializar LoRa
-  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_SS);
-  LoRa.setPins(LORA_SS, LORA_RST, LORA_DIO0);
+  LoRa.setPins(RADIO_CS_PIN, RADIO_RST_PIN, RADIO_DIO0_PIN);
 
-  if (!LoRa.begin(LORA_FREQ)) {
-    Serial.println("Error iniciando LoRa. Verifica conexiones.");
-    while (true);
+  if (!LoRa.begin(CONFIG_RADIO_FREQ * 1E6)) {
+    Serial.println("Fallo al iniciar LoRa.");
+    while (1);
   }
 
-  Serial.println("Nodo LoRa en modo receptor (Rx)");
+  LoRa.setTxPower(CONFIG_RADIO_OUTPUT_POWER);
+  LoRa.setSignalBandwidth(CONFIG_RADIO_BW * 1000);
+  LoRa.setSpreadingFactor(10);     // más sensibilidad, menos velocidad
+  LoRa.setPreambleLength(16);
+  LoRa.setSyncWord(0xAB);
+  LoRa.disableCrc();
+  LoRa.disableInvertIQ();
+  LoRa.setCodingRate4(7);
+
+  Serial.println("LoRa iniciado, esperando mensajes...");
+  LoRa.receive();  // modo recepción
 }
 
 void loop() {
-  // Esperar paquete entrante
   int packetSize = LoRa.parsePacket();
+
   if (packetSize) {
-    Serial.print("Mensaje recibido: ");
+    String mensaje = "";
     while (LoRa.available()) {
-      Serial.print((char)LoRa.read());
+      mensaje += (char)LoRa.read();
     }
-    Serial.print(" | RSSI: ");
-    Serial.println(LoRa.packetRssi());
 
-    // Leer temperatura y humedad
-    float temp = hdc1080.readTemperature();
-    float hum = hdc1080.readHumidity();
+    Serial.print("Mensaje recibido: ");
+    Serial.println(mensaje);
+    Serial.print("RSSI: ");
+    Serial.print(LoRa.packetRssi());
+    Serial.print(" | SNR: ");
+    Serial.println(LoRa.packetSnr());
 
-    Serial.print("Temp: ");
-    Serial.print(temp);
-    Serial.print(" °C | Hum: ");
-    Serial.print(hum);
-    Serial.println(" %");
+    // Mostrar en OLED si existe
+    if (u8g2) {
+      char buf[256];
+      u8g2->clearBuffer();
+      u8g2->drawStr(0, 12, "Mensaje:");
+      u8g2->drawStr(0, 26, mensaje.c_str());
+      snprintf(buf, sizeof(buf), "RSSI:%i", LoRa.packetRssi());
+      u8g2->drawStr(0, 40, buf);
+      snprintf(buf, sizeof(buf), "SNR:%.1f", LoRa.packetSnr());
+      u8g2->drawStr(0, 56, buf);
+      u8g2->sendBuffer();
+    }
   }
 
-  delay(1000);
+  delay(100);
 }
