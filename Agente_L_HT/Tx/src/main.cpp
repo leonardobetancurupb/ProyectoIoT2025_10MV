@@ -20,7 +20,7 @@
 #define MOISTURE_SENSOR_PIN 32
 const char *sensorID = "sensor_L_HT_001";
 const char *ip_destino = "34.204.1.236";
-const int puerto_destino = 4471;
+const int puerto_destino = 6471;
 
 ClosedCube_HDC1080 sensor;
 
