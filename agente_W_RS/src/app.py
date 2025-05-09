@@ -4,7 +4,7 @@ import os
 import json
 
 app = Flask(__name__)
-DATA_FOLDER = '/data/'
+DATA_FOLDER = '/data'
 
 @app.route('/recibir', methods=['POST'])
 def recibir_radiacion():
