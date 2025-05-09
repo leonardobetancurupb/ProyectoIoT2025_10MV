@@ -3,7 +3,7 @@ import os
 import json
 
 app = Flask(__name__)
-DATA_FOLDER = 'data'
+DATA_FOLDER = '/data'
 
 @app.route('/')
 def index():
