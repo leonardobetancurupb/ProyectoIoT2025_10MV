@@ -6,7 +6,7 @@
 // WiFi pública
 const char* ssid = "UPBWiFi";
 const char* password = "";
-const char* AGENT_SERVER = "http://ip_publica/data";
+const char* AGENT_SERVER = "http://ip_publica/puerto/recibir";
  
 // Config LoRa
 #define CONFIG_RADIO_FREQ         915.0
