@@ -1,112 +1,289 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 import os
 import json
+from datetime import datetime
+import uuid
 
-# Configuración de la página
-st.set_page_config(page_title="Dashboard de Sensores", page_icon="📊", layout="wide")
+# ConfiguraciÃ³n de la pÃ¡gina
+st.set_page_config(
+    page_title="Sistema de Monitoreo de Sensores",
+    page_icon="ðŸ“Š",
+    layout="wide"
+)
 
-# Simulación de base de datos de usuarios (en un archivo de texto plano)
-USERS_FILE = "users.json"
+# Rutas de archivos
+DB_FILE = "db.json"
+USER_DB_FILE = "users.json"
 
-def load_users():
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, "r") as f:
-            return json.load(f)
-    return {"admin": {"password": "admin", "role": "admin"}}
+# InicializaciÃ³n de la base de datos
+def init_db():
+    if not os.path.exists(DB_FILE):
+        with open(DB_FILE, "w") as f:
+            json.dump({"sensors": []}, f)
+    
+    if not os.path.exists(USER_DB_FILE):
+        default_admin = {
+            "username": "admin",
+            "password": "admin123",
+            "role": "admin"
+        }
+        with open(USER_DB_FILE, "w") as f:
+            json.dump({"users": [default_admin]}, f)
 
-def save_users(users):
-    with open(USERS_FILE, "w") as f:
-        json.dump(users, f)
+# Operaciones CRUD para sensores
+def get_sensors():
+    with open(DB_FILE, "r") as f:
+        data = json.load(f)
+    return data.get("sensors", [])
 
-# Función para mostrar la página de inicio
-def show_home():
-    st.title("Proyecto IoT: Dashboard de Sensores")
-    st.write("""
-    Bienvenido al proyecto IoT de monitoreo de sensores de humedad.
-    Este sistema centraliza los datos de los sensores y ofrece un dashboard interactivo.
-    """)
-    if st.button("Ir al Login"):
-        st.session_state.page = "login"
-
-# Función para el registro de usuarios
-def register():
-    st.title("Registro de Usuario")
-    new_username = st.text_input("Nuevo Usuario")
-    new_password = st.text_input("Nueva Contraseña", type="password")
-    if st.button("Registrarse"):
-        users = load_users()
-        if new_username in users:
-            st.error("El usuario ya existe.")
-        else:
-            users[new_username] = {"password": new_password, "role": "user"}
-            save_users(users)
-            st.success("Registro exitoso. Ahora puedes iniciar sesión.")
-            st.session_state.page = "login"
-
-# Función para el login
-def login():
-    st.title("Login")
-    username = st.text_input("Usuario")
-    password = st.text_input("Contraseña", type="password")
-    if st.button("Iniciar Sesión"):
-        users = load_users()
-        if username in users and users[username]["password"] == password:
-            st.session_state.user = username
-            st.session_state.role = users[username]["role"]
-            st.success("Login exitoso!")
-            st.session_state.page = "dashboard"
-        else:
-            st.error("Usuario o contraseña incorrectos")
-    if st.button("Registrarse"):
-        st.session_state.page = "register"
-
-# Función para cargar datos de sensores (simulados)
-def load_sensor_data():
-    data = {
-        "Sensor 1": np.random.normal(70, 10, 100),
-        "Sensor 2": np.random.normal(65, 8, 100),
-        "Sensor 3": np.random.normal(75, 12, 100)
+def add_sensor(name, type, location, value):
+    sensors = get_sensors()
+    new_sensor = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "type": type,
+        "location": location,
+        "value": value,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    return pd.DataFrame(data)
+    sensors.append(new_sensor)
+    with open(DB_FILE, "w") as f:
+        json.dump({"sensors": sensors}, f)
+    return new_sensor
 
-# Función para mostrar el dashboard
-def show_dashboard():
-    st.title("Dashboard de Sensores")
-    st.write(f"Bienvenido, {st.session_state.user} (Rol: {st.session_state.role})")
+def delete_sensor(sensor_id):
+    sensors = get_sensors()
+    updated_sensors = [s for s in sensors if s["id"] != sensor_id]
+    with open(DB_FILE, "w") as f:
+        json.dump({"sensors": updated_sensors}, f)
 
-    # Cargar datos
-    df = load_sensor_data()
+# Operaciones de usuarios
+def get_users():
+    with open(USER_DB_FILE, "r") as f:
+        data = json.load(f)
+    return data.get("users", [])
 
-    # Mostrar gráficos
-    st.subheader("Datos de Sensores")
-    st.line_chart(df)
+def add_user(username, password, role="user"):
+    users = get_users()
+    if any(user["username"] == username for user in users):
+        return False
+    new_user = {
+        "username": username,
+        "password": password,
+        "role": role
+    }
+    users.append(new_user)
+    with open(USER_DB_FILE, "w") as f:
+        json.dump({"users": users}, f)
+    return True
 
-    # Mostrar estadísticas
-    st.subheader("Estadísticas")
-    st.write(df.describe())
+def authenticate(username, password):
+    users = get_users()
+    for user in users:
+        if user["username"] == username and user["password"] == password:
+            return user
+    return None
 
-    # Funcionalidades según el rol
-    if st.session_state.role == "admin":
-        st.subheader("Panel de Administrador")
-        if st.button("Eliminar Datos"):
-            st.warning("Funcionalidad de eliminación simulada.")
-        if st.button("Agregar Datos"):
-            st.warning("Funcionalidad de agregar datos simulada.")
-    else:
-        st.write("Rol de Usuario: Solo visualización permitida.")
+# Inicializar la base de datos
+init_db()
 
-# Main
-if __name__ == "__main__":
-    if "page" not in st.session_state:
-        st.session_state.page = "home"
+# Inicializar el estado de la sesiÃ³n
+if "page" not in st.session_state:
+    st.session_state.page = "landing"
+if "user" not in st.session_state:
+    st.session_state.user = None
+if "show_registration" not in st.session_state:
+    st.session_state.show_registration = False
 
-    if st.session_state.page == "home":
-        show_home()
-    elif st.session_state.page == "login":
-        login()
-    elif st.session_state.page == "register":
-        register()
-    elif st.session_state.page == "dashboard":
-        show_dashboard() 
+# Funciones de navegaciÃ³n
+def go_to_login():
+    st.session_state.page = "login"
+    st.session_state.show_registration = False
+
+def go_to_landing():
+    st.session_state.page = "landing"
+
+def go_to_dashboard():
+    st.session_state.page = "dashboard"
+
+def logout():
+    st.session_state.user = None
+    st.session_state.page = "landing"
+
+def show_register_form():
+    st.session_state.show_registration = True
+
+def show_login_form():
+    st.session_state.show_registration = False
+
+# PÃ¡gina de inicio (Landing)
+def landing_page():
+    st.title("Sistema de Monitoreo de Sensores")
+    
+    st.markdown("""
+    ## Bienvenido a nuestra plataforma de monitoreo
+    
+    Esta aplicaciÃ³n proporciona una soluciÃ³n completa para monitorizar y gestionar sus sensores.
+    
+    ### CaracterÃ­sticas principales:
+    
+    - ðŸ“Š VisualizaciÃ³n en tiempo real
+    - ðŸ” Sistema de autenticaciÃ³n seguro
+    - ðŸ‘¥ Diferentes roles de usuario
+    - ðŸ“± Interfaz responsiva y moderna
+    
+    ### Acerca del proyecto
+    
+    Este sistema permite monitorear sensores diversos como temperatura, humedad, 
+    presiÃ³n y mÃ¡s. Los administradores pueden agregar, eliminar y gestionar sensores,
+    mientras que los usuarios pueden visualizar las lecturas actuales.
+    """)
+    
+    # Imagen placeholder para la landing page
+    st.image("https://via.placeholder.com/800x400?text=Sistema+de+Monitoreo+de+Sensores", 
+             caption="Plataforma de monitoreo avanzada")
+    
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        st.button("Iniciar SesiÃ³n", use_container_width=True, on_click=go_to_login)
+
+# PÃ¡gina de login/registro
+def login_page():
+    st.title("Acceso al Sistema")
+    
+    tab1, tab2 = st.tabs(["Iniciar SesiÃ³n", "Registrarse"])
+    
+    with tab1:
+        with st.form("login_form"):
+            username = st.text_input("Usuario")
+            password = st.text_input("ContraseÃ±a", type="password")
+            submit = st.form_submit_button("Ingresar")
+            
+            if submit:
+                user = authenticate(username, password)
+                if user:
+                    st.session_state.user = user
+                    st.session_state.page = "dashboard"
+                    st.rerun()
+                else:
+                    st.error("Usuario o contraseÃ±a incorrectos")
+    
+    with tab2:
+        with st.form("register_form"):
+            new_username = st.text_input("Nuevo Usuario")
+            new_password = st.text_input("Nueva ContraseÃ±a", type="password")
+            confirm_password = st.text_input("Confirmar ContraseÃ±a", type="password")
+            submit_reg = st.form_submit_button("Registrarse")
+            
+            if submit_reg:
+                if new_password != confirm_password:
+                    st.error("Las contraseÃ±as no coinciden")
+                elif len(new_username) < 3:
+                    st.error("El nombre de usuario debe tener al menos 3 caracteres")
+                elif len(new_password) < 6:
+                    st.error("La contraseÃ±a debe tener al menos 6 caracteres")
+                else:
+                    success = add_user(new_username, new_password)
+                    if success:
+                        st.success("Usuario registrado correctamente. Ahora puede iniciar sesiÃ³n.")
+                        show_login_form()
+                    else:
+                        st.error("El nombre de usuario ya existe")
+    
+    with st.container():
+        st.button("Volver a la pÃ¡gina principal", on_click=go_to_landing)
+
+# PÃ¡gina de dashboard
+def dashboard_page():
+    # Verificar si el usuario estÃ¡ autenticado
+    if not st.session_state.user:
+        st.warning("Debe iniciar sesiÃ³n para acceder a esta pÃ¡gina")
+        st.button("Ir a Login", on_click=go_to_login)
+        return
+    
+    st.title(f"Dashboard - Bienvenido, {st.session_state.user['username']}")
+    
+    # Mostrar menÃº lateral
+    with st.sidebar:
+        st.title("MenÃº")
+        st.text(f"Usuario: {st.session_state.user['username']}")
+        st.text(f"Rol: {st.session_state.user['role']}")
+        st.divider()
+        st.button("Ver Sensores", use_container_width=True, key="btn_view_sensors")
+        
+        # Solo mostrar opciones de administrador si el usuario tiene ese rol
+        if st.session_state.user["role"] == "admin":
+            st.button("Administrar Sensores", use_container_width=True, key="btn_manage_sensors")
+        
+        st.button("Cerrar SesiÃ³n", use_container_width=True, on_click=logout)
+    
+    # Contenido principal
+    tab1, tab2 = st.tabs(["Ver Sensores", "Administrar Sensores" if st.session_state.user["role"] == "admin" else ""])
+    
+    # PestaÃ±a de visualizaciÃ³n de sensores (para todos los usuarios)
+    with tab1:
+        st.header("Sensores Activos")
+        sensors = get_sensors()
+        
+        if not sensors:
+            st.info("No hay sensores registrados actualmente.")
+        else:
+            # Crear una cuadrÃ­cula para mostrar sensores
+            cols = st.columns(3)
+            for i, sensor in enumerate(sensors):
+                with cols[i % 3]:
+                    with st.container(border=True):
+                        st.subheader(sensor["name"])
+                        st.metric("Valor", sensor["value"])
+                        st.caption(f"Tipo: {sensor['type']}")
+                        st.caption(f"UbicaciÃ³n: {sensor['location']}")
+                        st.caption(f"Ãšltima actualizaciÃ³n: {sensor['timestamp']}")
+    
+    # PestaÃ±a de administraciÃ³n (solo para administradores)
+    if st.session_state.user["role"] == "admin":
+        with tab2:
+            st.header("Administrar Sensores")
+            
+            # Formulario para agregar un nuevo sensor
+            with st.expander("Agregar nuevo sensor", expanded=True):
+                with st.form("add_sensor_form"):
+                    name = st.text_input("Nombre del sensor")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        sensor_type = st.selectbox("Tipo", ["Temperatura", "Humedad", "PresiÃ³n", "Luz", "Movimiento", "Otro"])
+                    with col2:
+                        location = st.text_input("UbicaciÃ³n")
+                    value = st.slider("Valor inicial", 0, 100, 50)
+                    
+                    submit = st.form_submit_button("Agregar Sensor")
+                    if submit:
+                        if name and location:
+                            new_sensor = add_sensor(name, sensor_type, location, value)
+                            st.success(f"Sensor '{name}' agregado correctamente")
+                        else:
+                            st.error("Por favor complete todos los campos")
+            
+            # Lista de sensores con opciÃ³n de eliminar
+            st.subheader("Sensores Existentes")
+            sensors = get_sensors()
+            
+            if not sensors:
+                st.info("No hay sensores registrados.")
+            else:
+                for sensor in sensors:
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"**{sensor['name']}** - {sensor['type']} ({sensor['location']})")
+                    with col2:
+                        if st.button("Eliminar", key=f"del_{sensor['id']}"):
+                            delete_sensor(sensor['id'])
+                            st.success(f"Sensor '{sensor['name']}' eliminado")
+                            st.rerun()
+
+# Routing principal
+if st.session_state.page == "landing":
+    landing_page()
+elif st.session_state.page == "login":
+    login_page()
+elif st.session_state.page == "dashboard":
+    dashboard_page()
