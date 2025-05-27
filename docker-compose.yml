@@ -4,14 +4,14 @@
 version: "3.8"
 services:
   gestion:
-    build: ./app
+    build: ./appEjemploProfe
     container_name: gestion
     hostname: gestion
     ports:
       - "8501:8501"
     command: streamlit run app.py
   front:
-    build: ./front
+    build: ./frontEjemploProfe
     container_name: pagina
     hostname: pagina
     ports:
