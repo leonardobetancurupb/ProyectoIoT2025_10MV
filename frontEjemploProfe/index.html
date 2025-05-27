@@ -1,0 +1,200 @@
+<!DOCTYPE HTML>
+<!--
+	Landed by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>IoT UPB 2025</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload landing">
+		<div id="page-wrapper">
+
+			<!-- Header -->
+				<header id="header">
+					<h1 id="logo"><a href="index.html">Página de configuración de IoT UPB</a></h1>
+					<nav id="nav">
+						<ul>
+							<li><a href="index.html">Inicio</a></li>
+							<li><a id="sensor-link" href="#" class="button primary">Iniciar Sesion</a></li>
+							<script>
+								// 1) Recuperamos el hostname (puede ser localhost, contenedor.docker.local, la IP interna, etc.)
+								const host = window.location.hostname;
+								// 2) Definimos el puerto de la otra app
+								const port = 8501;
+								// 3) Montamos la URL completa
+								const url = `http://${host}:${port}/`;
+								// 4) La ponemos en el href del <a>
+								document.getElementById('sensor-link').href = url;
+								document.getElementById('sensor-link').textContent = `Iniciar Sesión`;
+							  </script>
+						</ul>
+					</nav>
+				</header>
+
+			<!-- Banner -->
+				<section id="banner">
+					<div class="content">
+						<header>
+							<h2>Bienvenido a la Plataforma Smart UPB</h2>
+							<p>Gestión de la sensorica de UPB.<br />
+							Creación, visualización y manipulacion de los sensores del campus.</p>
+						</header>
+						<span class="image"><img src="images/pic01.jpg" alt="" /></span>
+					</div>
+					<a href="#one" class="goto-next scrolly">Siguiente</a>
+				</section>
+
+			<!-- One -->
+				<section id="one" class="spotlight style1 bottom">
+					<span class="image fit main"><img src="images/pic02.jpg" alt="" /></span>
+					<div class="content">
+						<div class="container">
+							<div class="row">
+								<div class="col-4 col-12-medium">
+									<header>
+										<h2>SMART CAMPUS UPB - IoT</h2>
+										<p>Plataforma IoT Inteligente para la Gestión Ambiental Comunitaria</p>
+									</header>
+								</div>
+								<div class="col-4 col-12-medium">
+									<p>Esta plataforma IoT ha sido diseñada para monitorear, analizar y gestionar variables ambientales en tiempo real, a partir de sensores distribuidos en un territorio definido. Utiliza el framework FIWARE como base operativa, lo cual garantiza interoperabilidad, escalabilidad y facilidad de integración con nuevas funcionalidades. Gracias a su arquitectura modular basada en microservicios, permite a las comunidades no solo visualizar datos históricos y actuales, sino también anticiparse a eventos críticos mediante el uso de herramientas avanzadas de análisis y predicción propias de la Cuarta Revolución Industrial.</p>
+								</div>
+								<div class="col-4 col-12-medium">
+									<p>La plataforma opera sobre el framework abierto FIWARE, reconocido internacionalmente por su capacidad de integración de datos contextuales en sistemas inteligentes. Esta base tecnológica proporciona los componentes necesarios para gestionar flujos de datos en tiempo real, normalizarlos y utilizarlos como insumo para tableros de control, alertas automatizadas y algoritmos de predicción.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<a href="#two" class="goto-next scrolly">Next</a>
+				</section>
+
+			<!-- Two -->
+				<section id="two" class="spotlight style2 right">
+					<span class="image fit main"><img src="images/pic03.jpg" alt="" /></span>
+					<div class="content">
+						<header>
+							<h2>Sistema comunitario y colaborativo</h2>
+							<p>Lo construimos todos juntos... puedes participar!!!</p>
+						</header>
+						<p>Se trata de un sistema desarrollado para ser gestionado directamente por la comunidad. Esto asegura que las decisiones que se tomen estén fundamentadas en información precisa, generada localmente. La comunidad administra, mantiene y evoluciona la plataforma, utilizando tecnologías modernas para vigilar el entorno y actuar frente a condiciones adversas o cambios inesperados.</p>
+						<ul class="actions">
+						</ul>
+					</div>
+					<a href="#three" class="goto-next scrolly">Next</a>
+				</section>
+
+			<!-- Three -->
+				<section id="three" class="spotlight style3 left">
+					<span class="image fit main bottom"><img src="images/pic04.jpg" alt="" /></span>
+					<div class="content">
+						<header>
+							<h2>Plataforma inteligente, segura y adaptable</h2>
+							<p>IaC, Contendedores, microservicios, Sensores</p>
+						</header>
+						<p>La plataforma cuenta con un módulo de monitoreo ambiental, gestión de recursos y administración del sistema, todo accesible mediante interfaces visuales intuitivas. Su estructura de microservicios permite incorporar nuevas funcionalidades según las necesidades emergentes, utilizando prácticas de desarrollo como Infraestructura como Código (IaC) y fomentando la contribución colaborativa de usuarios y desarrolladores.</p>
+						<ul class="actions">
+						</ul>
+					</div>
+					<a href="#four" class="goto-next scrolly">Next</a>
+				</section>
+
+			<!-- Four -->
+				<section id="four" class="wrapper style1 special fade-up">
+					<div class="container">
+						<header class="major">
+							<h2>Funcionalidades y Características</h2>
+							<p>Desarrollo multi lenguaje en servidores locales de la UPB</p>
+						</header>
+						<div class="box alt">
+							<div class="row gtr-uniform">
+								<section class="col-4 col-6-medium col-12-xsmall">
+									<span class="icon solid alt major fa-chart-area"></span>
+									<h3>Interoperabilidad Total</h3>
+									<p>Conectividad fluida con diversos sensores y sistemas</p>
+								</section>
+								<section class="col-4 col-6-medium col-12-xsmall">
+									<span class="icon solid alt major fa-comment"></span>
+									<h3>Modularidad Dinámica</h3>
+									<p>Cada función es un microservicio fácilmente ampliable</p>
+								</section>
+								<section class="col-4 col-6-medium col-12-xsmall">
+									<span class="icon solid alt major fa-flask"></span>
+									<h3>Gestión Comunitaria</h3>
+									<p>Propiedad y administración local del sistema</p>
+								</section>
+								<section class="col-4 col-6-medium col-12-xsmall">
+									<span class="icon solid alt major fa-paper-plane"></span>
+									<h3>Predicción Avanzada</h3>
+									<p>Modelos inteligentes para anticipar eventos</p>
+								</section>
+								<section class="col-4 col-6-medium col-12-xsmall">
+									<span class="icon solid alt major fa-file"></span>
+									<h3>Visualización Clara</h3>
+									<p>Tableros intuitivos para decisiones informadas.</p>
+								</section>
+								<section class="col-4 col-6-medium col-12-xsmall">
+									<span class="icon solid alt major fa-lock"></span>
+									<h3>Seguridad Robusta</h3>
+									<p>Protección de datos y acceso controlado garantizado..</p>
+								</section>
+							</div>
+						</div>
+						<footer class="major">
+							<ul class="actions special">
+								<li><a href="#" class="button">Inicio</a></li>
+							</ul>
+						</footer>
+					</div>
+				</section>
+
+			<!-- Five -->
+				<section id="five" class="wrapper style2 special fade">
+					<div class="container">
+						<header>
+							<h2>Paticipa</h2>
+							<p>danos tu correo para recibir noticias y suscribirte y recibir capacitaciones</p>
+						</header>
+						<form method="post" action="#" class="cta">
+							<div class="row gtr-uniform gtr-50">
+								<div class="col-8 col-12-xsmall"><input type="email" name="email" id="email" placeholder="Tu correo electronico" /></div>
+								<div class="col-4 col-12-xsmall"><input type="submit" value="Vincularme" class="fit primary" /></div>
+							</div>
+						</form>
+					</div>
+				</section>
+
+			<!-- Footer -->
+				<footer id="footer">
+					<ul class="icons">
+						<li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
+						<li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
+						<li><a href="#" class="icon brands alt fa-linkedin-in"><span class="label">LinkedIn</span></a></li>
+						<li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
+						<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+						<li><a href="#" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+					</ul>
+					<ul class="copyright">
+						<li>&copy; UPB - SEC. Todos los derechos reservados.</li><li></li>
+					</ul>
+				</footer>
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,24 +1,25 @@
-# Ejemplo de como desplegar en un ambiente de prueba un framework FIWARE para 
-# una aplicacion de ciudad inteligente / Internet de las Cosas
-# 
 # En este ejemplo vamos a usar un sensor que lee la temperatura de una termocupla
 # y la almacena en una base de datos en un servidor FiWARE en la Nube
 # sudo sysctl -w vm.max_map_count=262144
 version: "3.8"
 services:
-  # Frontend desarrollado en streamlit
-  #frontend:
-  #  build: .
-  #  container_name: frontend
-  #  ports:
-  #    - "80:8501"
-  #  volumes:
-  #    - frontend:/app
-
+  gestion:
+    build: ./app
+    container_name: gestion
+    hostname: gestion
+    ports:
+      - "8501:8501"
+    command: streamlit run app.py
+  front:
+    build: ./front
+    container_name: pagina
+    hostname: pagina
+    ports:
+      - "80:80"
+    command: apachectl -D FOREGROUND
   # Orion es el motor principal, el agente, el context broker
   orion:
     image: fiware/orion-ld
-    platform: linux/amd64
     hostname: orion
     container_name: orion
     depends_on:
@@ -37,10 +38,10 @@ services:
       retries: 5
       start_period: 30s
 
+
   #Quantum Leap
   quantumleap:
     image: orchestracities/quantumleap
-    platform: linux/amd64
     hostname: quantumleap
     container_name: fiware-quantumleap
     ports:
@@ -53,10 +54,10 @@ services:
       - LOGLEVEL=DEBUG
 
 
+
   # Bases de datos
   mongo-db:
     image: mongo:3.6
-    platform: linux/amd64
     hostname: mongo-db
     container_name: db-mongo
     expose:
@@ -67,6 +68,7 @@ services:
       - default
     volumes:
       - mongo-db:/data/db
+
 
   crate-db:
     image: crate
@@ -83,6 +85,18 @@ services:
       - crate-db:/data
 
 
+  # visualizacion
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - crate-db
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana:/var/lib/grafana
+
+
 networks:
   default:
     ipam:
@@ -92,4 +106,4 @@ networks:
 volumes:
   mongo-db: ~
   crate-db: ~
-  frontend: ~
+  grafana: ~
