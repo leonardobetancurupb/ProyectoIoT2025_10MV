@@ -1,0 +1,92 @@
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: streamlit_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./src:/app/src  
+      - ./data:/app/data 
+      - ./assets:/app/assets
+    networks:
+      - fiware_net
+    depends_on:
+      - orion
+    environment:
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0 
+      - STREAMLIT_SERVER_PORT=8501      
+      - ORION_PORT=1026
+
+  mongo:
+    image: mongo:4.4
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - fiware_net
+    command: --nojournal 
+
+  orion:
+    image: fiware/orion:latest 
+    container_name: orion_broker
+    ports:
+      - "1026:1026"
+    depends_on:
+      - mongo
+    networks:
+      - fiware_net
+    command: -dbhost mongo -logLevel DEBUG 
+
+  cratedb:
+    image: crate:latest
+    container_name: crate_db
+    ports:
+      - "4200:4200" 
+      - "5432:5432" 
+    volumes:
+      - crate_data:/data
+    networks:
+      - fiware_net
+    command: crate -Cdiscovery.type=single-node -Cauth.host_based.enabled=false 
+
+  quantumleap:
+    image: orchestracities/quantumleap:latest 
+    container_name: quantum_leap
+    ports:
+      - "8668:8668"
+    depends_on:
+      - cratedb
+      - orion
+    networks:
+      - fiware_net
+    environment:
+      - CRATE_HOST=cratedb                 
+      - ORION_URL=http://orion:1026         URL for Orion Context Broker
+
+  grafana:
+    image: grafana/grafana:latest 
+    container_name: grafana_dashboard
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - fiware_net
+    depends_on:
+      - cratedb 
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+volumes:
+  mongo_data:
+  crate_data:
+  grafana_data:
+
+networks:
+  fiware_net:
+    driver: bridge
